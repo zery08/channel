@@ -78,10 +78,6 @@ def _extract_tool_calls(msg) -> list[tuple[str, dict]]:
 
 def _reason_for_tool(tool_name: str) -> str:
     return {
-        "ls": "작업 공간 구조를 빠르게 파악해 필요한 파일 위치를 찾습니다.",
-        "glob": "패턴으로 관련 파일 후보를 좁혀 스키마/설정 정보를 찾습니다.",
-        "read_file": "라우팅/스킬/지침 파일 내용을 읽어 다음 액션을 결정합니다.",
-        "task": "supervisor가 전문 subagent(sql_db)에게 실제 SQL 작업을 위임합니다.",
         "sql_db_list_tables": "후보 테이블을 찾기 위해 전체 테이블 목록을 확인했습니다.",
         "sql_db_schema": "컬럼/타입 확인으로 정확한 SQL을 만들기 위해 스키마를 조회했습니다.",
         "sql_db_query_checker": "실행 전 SQL 문법/적합성 검증을 진행했습니다.",
@@ -118,10 +114,6 @@ def run_shell(db_url: str | None = None) -> None:
                 seen_calls.add(sig)
                 print(f"\n{_YELLOW}[tool]{_RESET} {name}({json.dumps(args, ensure_ascii=False)})")
                 print(f"{_GREY}  reasoning: {_reason_for_tool(name)}{_RESET}")
-                if name == "task":
-                    subagent = args.get("subagent_type") or args.get("subagent") or "unknown"
-                    print(f"{_CYAN}  delegated_to:{_RESET} {subagent}")
-                    print(f"{_CYAN}  note:{_RESET} 실제 SQL은 이후 sql_db_query 호출에서 표시됩니다.")
                 if name == "sql_db_query" and "query" in args:
                     print(f"{_GREEN}  used_query:{_RESET} {args['query']}")
 
