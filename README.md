@@ -11,9 +11,9 @@ Impala 데이터레이크에 자연어로 질문하는 AI SQL 에이전트.
     ▼
 channel supervisor  (deepagents graph)
     │  AGENTS.md로 identity 정의
-    │  task("data-lake-sql", ...) 로 위임
+    │  task("sql_db", ...) 로 위임
     ▼
-data-lake-sql subagent  (deepagents graph)
+sql_db subagent  (deepagents graph)
     │  skills: schema-exploration, query-writing
     ├── search_tables
     ├── describe_table
@@ -57,7 +57,7 @@ MODEL=anthropic/claude-sonnet-4-5
 | `BASE_URL` | API 엔드포인트 |
 | `MODEL` | 모든 에이전트의 기본 모델 |
 | `SUPERVISOR_MODEL` | supervisor 전용 모델 오버라이드 (선택) |
-| `DATA_LAKE_SQL_MODEL` | data-lake-sql 전용 모델 오버라이드 (선택) |
+| `SQL_DB_MODEL` | sql_db 전용 모델 오버라이드 (선택) |
 | `{PREFIX}_API_KEY` | 에이전트별 API 키 오버라이드 (선택) |
 | `{PREFIX}_BASE_URL` | 에이전트별 엔드포인트 오버라이드 (선택) |
 
@@ -118,7 +118,7 @@ src/channel/
 │   ├── query-writing/    # SQL 작성 절차 (SKILL.md)
 │   └── schema-exploration/ # 카탈로그 탐색 절차 (SKILL.md)
 ├── subagents/
-│   └── data_lake_sql.py  # data-lake-sql SubAgent 팩토리
+│   └── sql_db.py  # sql_db SubAgent 팩토리
 ├── catalog/
 │   ├── interfaces.py     # Catalog 프로토콜
 │   └── mock.py           # 인메모리 카탈로그 + 샘플 데이터
@@ -127,7 +127,7 @@ src/channel/
 ├── sql/
 │   └── guard.py          # SQL 안전성 검증 (쓰기 차단)
 ├── tools/
-│   └── data_lake_sql.py  # LangChain StructuredTool 래퍼
+│   └── sql_db.py  # LangChain StructuredTool 래퍼
 └── cli.py                # 대화형 셸
 ```
 

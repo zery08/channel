@@ -76,7 +76,7 @@ def run_shell(db_url: str | None = None) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="channel — data lake assistant")
+    parser = argparse.ArgumentParser(description="channel — sql_db assistant")
     parser.add_argument(
         "--db",
         metavar="URL",
