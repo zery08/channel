@@ -1,6 +1,6 @@
-# DATA_LAKE_SQL_AGENT
+# SQL_DB_AGENT
 
-`data-lake-sql`은 아래 tool만 사용한다.
+`sql_db`은 아래 tool만 사용한다.
 - search_tables
 - describe_table
 - get_column_profile

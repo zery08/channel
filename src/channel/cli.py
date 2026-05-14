@@ -49,6 +49,46 @@ def _resolve_db_url(db_arg: str | None) -> str | None:
     return os.environ.get("DATABASE_URL")
 
 
+def _extract_text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+    return ""
+
+
+def _extract_tool_calls(msg) -> list[tuple[str, dict]]:
+    calls: list[tuple[str, dict]] = []
+    for tc in getattr(msg, "tool_calls", []) or []:
+        name = tc.get("name")
+        args = tc.get("args") or {}
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except json.JSONDecodeError:
+                args = {"raw": args}
+        if name:
+            calls.append((name, args if isinstance(args, dict) else {"raw": str(args)}))
+    return calls
+
+
+def _reason_for_tool(tool_name: str) -> str:
+    return {
+        "ls": "작업 공간 구조를 빠르게 파악해 필요한 파일 위치를 찾습니다.",
+        "glob": "패턴으로 관련 파일 후보를 좁혀 스키마/설정 정보를 찾습니다.",
+        "read_file": "라우팅/스킬/지침 파일 내용을 읽어 다음 액션을 결정합니다.",
+        "task": "supervisor가 전문 subagent(sql_db)에게 실제 SQL 작업을 위임합니다.",
+        "sql_db_list_tables": "후보 테이블을 찾기 위해 전체 테이블 목록을 확인했습니다.",
+        "sql_db_schema": "컬럼/타입 확인으로 정확한 SQL을 만들기 위해 스키마를 조회했습니다.",
+        "sql_db_query_checker": "실행 전 SQL 문법/적합성 검증을 진행했습니다.",
+        "sql_db_query": "검증된 읽기 전용 SQL을 실제 실행해 결과를 가져왔습니다.",
+    }.get(tool_name, "요청 해결을 위해 필요한 중간 도구를 호출했습니다.")
+
+
 def run_shell(db_url: str | None = None) -> None:
     agent = create_channel_agent(db_url=db_url)
 
@@ -65,18 +105,41 @@ def run_shell(db_url: str | None = None) -> None:
             break
 
         print()
-        for update in agent.stream(
+        printed = False
+        seen_calls: set[tuple[str, str]] = set()
+        for chunk, _meta in agent.stream(
             {"messages": [{"role": "user", "content": text}]},
-            stream_mode="updates",
+            stream_mode="messages",
         ):
-            for node, state in update.items():
-                if state:
-                    _print_update(node, state.get("messages", []))
-        print()
+            for name, args in _extract_tool_calls(chunk):
+                sig = (name, json.dumps(args, ensure_ascii=False, sort_keys=True))
+                if sig in seen_calls:
+                    continue
+                seen_calls.add(sig)
+                print(f"\n{_YELLOW}[tool]{_RESET} {name}({json.dumps(args, ensure_ascii=False)})")
+                print(f"{_GREY}  reasoning: {_reason_for_tool(name)}{_RESET}")
+                if name == "task":
+                    subagent = args.get("subagent_type") or args.get("subagent") or "unknown"
+                    print(f"{_CYAN}  delegated_to:{_RESET} {subagent}")
+                    print(f"{_CYAN}  note:{_RESET} 실제 SQL은 이후 sql_db_query 호출에서 표시됩니다.")
+                if name == "sql_db_query" and "query" in args:
+                    print(f"{_GREEN}  used_query:{_RESET} {args['query']}")
+
+            if getattr(chunk, "type", None) != "AIMessageChunk":
+                continue
+            piece = _extract_text(getattr(chunk, "content", ""))
+            if piece:
+                print(piece, end="", flush=True)
+                printed = True
+
+        if printed:
+            print("\n")
+        else:
+            print(f"{_GREY}(no streamed response){_RESET}\n")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="channel — data lake assistant")
+    parser = argparse.ArgumentParser(description="channel — sql_db assistant")
     parser.add_argument(
         "--db",
         metavar="URL",
