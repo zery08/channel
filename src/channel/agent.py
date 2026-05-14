@@ -55,7 +55,7 @@ def create_channel_agent(db_url: str | None = None):
     from deepagents import create_deep_agent
     from deepagents.backends import FilesystemBackend
 
-    from channel.subagents.data_lake_sql import create_data_lake_sql_subagent
+    from channel.subagents.sql_db import create_sql_db_subagent
 
     resolved_url = db_url or os.environ.get("DATABASE_URL")
     if not resolved_url:
@@ -63,7 +63,7 @@ def create_channel_agent(db_url: str | None = None):
 
     # ── Register subagents here ───────────────────────────────────────────────
     subagents = [
-        create_data_lake_sql_subagent(resolved_url),
+        create_sql_db_subagent(resolved_url),
         # create_reporting_subagent(resolved_url),   ← future
     ]
     # ─────────────────────────────────────────────────────────────────────────
