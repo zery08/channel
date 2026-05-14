@@ -1,4 +1,4 @@
-"""data-lake-sql subagent — SQL assistant backed by SQLAlchemy + SQLDatabaseToolkit."""
+"""sql_db subagent — SQL assistant backed by SQLAlchemy + SQLDatabaseToolkit."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from channel.sql.guard import SQLValidationError, validate_sql
 
 _SKILLS_DIR = str(Path(__file__).parent.parent / "skills")
 
-_SYSTEM_PROMPT = """You are a SQL assistant for a data lake.
+_SYSTEM_PROMPT = """You are a SQL assistant for a sql_db.
 
 Use the schema-exploration skill to discover tables and columns.
 Use the query-writing skill to build and run SQL queries.
@@ -47,9 +47,9 @@ def _wrap_query_tool(tool):
     )
 
 
-def create_data_lake_sql_subagent(db_url: str) -> SubAgent:
-    """Return a SubAgent spec for the data-lake-sql agent."""
-    model = build_model("DATA_LAKE_SQL")
+def create_sql_db_subagent(db_url: str) -> SubAgent:
+    """Return a SubAgent spec for the sql_db agent."""
+    model = build_model("SQL_DB")
     db = SQLDatabase.from_uri(db_url)
     toolkit = SQLDatabaseToolkit(db=db, llm=model)
 
@@ -59,9 +59,9 @@ def create_data_lake_sql_subagent(db_url: str) -> SubAgent:
     ]
 
     return {
-        "name": "data-lake-sql",
+        "name": "sql_db",
         "description": (
-            "Handles all data lake work: table discovery, schema inspection, "
+            "Handles all sql_db work: table discovery, schema inspection, "
             "SQL validation, and query execution."
         ),
         "system_prompt": _SYSTEM_PROMPT,
